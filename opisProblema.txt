@@ -1,0 +1,11 @@
+Salon namestaja
+
+Za svakog zaposlenog u salonu nameštaja  čuva se ime, prezime, adresa, datum rodjenja. Salon zapošljava prodavce nameštaja i montažere. Za svakog prodavca pamti se i visina mesečne plate. Za montažere se vodi evidencija o visini dnevince, i vrsti nameštaja koju montira.
+Salon nameštaja poseduje više prodavnica. Za svaku prodavnicu se pamti njeno ime, adresa i grad u kojem se prodavnica nalazi, kao i radno vreme prodavnice.
+U svakoj prodavnici radi bar jedan prodavac. Svaki prodavac je zaposlen u tačno jednoj prodavnici.
+U prodavnicama se izlaže nameštaj. Za svaki nameštaj izložen u nekoj prodavnici čuva se broj primeraka tog nameštaja koji se može kupiti u prodavnici. Svaki komad nameštaja ima svoje ime, cenu, vrstu i kategoriju kojoj pripada.
+Sistem vodi i evidenciju o ljudima koji kupuju u salonima. Za svakog kupca se pamti ime, prezime i specijalan popust koju kupac može ostvariti. Svaki kupac u sistemu obavvio je bar jednu kupovinu, a može obaviti i više njih. Kupovina se ostvaruje od strane tačno jednog kupca i sadrži sav nameštaj koji je kupac tom prilikom kupio, datum kupovine i ukupnu cenu.
+Za svaku kupovini mora se napraviti plan dostave kupljenog nameštaja. Kupljeni nameštaj se može dostaviti sav odjednom ili iz više puta. Svaki plan dostave sadrži datum dostave, komad nameštaja koji će biti dostavljen, adresu dostave i montažera zaduženog za dostavu nameštaja.
+Dodatni uslovi
+Cena svake kupovine se računa kao suma cena svih izabranih nameštaja za tu kupovinu, umanjena za popust koji je ostvario kupac.
+Montažer ne može da dostavlja nameštaj koji pripada kategoriji za koju nije obučen.
