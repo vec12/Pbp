@@ -2,7 +2,7 @@ drop database if exists salon_namestaja;
 create database if not exists salon_namestaja;
 use salon_namestaja;
 create table zaposleni (
-       idZaposlenog int not null primary key,
+       idZaposlenog int not null primary key AUTO_INCREMENT,
     ime varchar(45) not null,
     prezime varchar(45) not null,
     adresa varchar(45) not null,
@@ -18,7 +18,7 @@ create table montazer (
 );
 
 create table prodavnica (
-       idProdavnice int not null primary key,
+       idProdavnice int not null primary key AUTO_INCREMENT,
        ime varchar(45) not null,
        adresa varchar(45) not null,
        grad varchar(45) not null,
@@ -34,7 +34,7 @@ create table prodavac (
 );
 
 create table namestaj (
-       idNamestaja int not null primary key,
+       idNamestaja int not null primary key AUTO_INCREMENT,
        ime varchar(45) not null,
        vrsta_namestaja varchar(45) not null,
        cena int not null,
@@ -51,14 +51,14 @@ create table izlaze (
 );
 
 create table kupac (
-       idKupca int not null primary key,
-       ime varchar(45) not null,
+       idKupca int not null primary key AUTO_INCREMENT,
+       ime varchar(45) not null, 
        prezime varchar(45) not null,
        popust double
        );
 
 create table kupovina (
-       idKupovine int not null primary key,
+       idKupovine int not null primary key AUTO_INCREMENT,
        datum date not null,
        cena double not null default 0,
        id_kupca int not null,
@@ -66,20 +66,21 @@ create table kupovina (
        );
 
 create table planDostave (
-       datum date not null primary key,
+	   idPlanDostave int not null primary key,
        adresa varchar(45) not null,
        id_montazera int not null,
+		datum date not null,	
        foreign key (id_montazera) references montazer(id_zaposlenog)
 );
 
 create table kupljenNamestaj (
        id_namestaja int not null,
        id_kupovine int not null,
-       datum date not null,
+       id_planDostave int not null,
        primary key (id_namestaja, id_kupovine),
        foreign key (id_namestaja) references namestaj (idNamestaja),
        foreign key (id_kupovine) references kupovina (idKupovine),
-       foreign key (datum) references planDostave (datum)
+       foreign key (id_planDostave) references planDostave (idPlanDostave)
 );
 
 delimiter $$
@@ -107,8 +108,8 @@ create trigger montazer_trigger before insert on kupljenNamestaj
 		    	       from montazer mon
 			       where mon.id_zaposlenog = (select id_montazera
 			       	     		       	  from planDostave pd
-							  where pd.datum = new.datum));
-		if((vrsta != vrstaMon) && (vrsta not like 'opsta')) then
+							  where pd.idPlanDostave = new.id_planDostave));
+		if((vrsta != vrstaMon) && (vrstaMon != 'opsta') && (vrsta != 'opsta') then
 			 signal sqlstate '45000' set message_text='montazer ne moze montirati izabrani namestaj';
 		end if;
 	   end

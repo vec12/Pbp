@@ -5,7 +5,7 @@
 #include <stdarg.h>
 #include <errno.h>
 
-static void error_fatal (char *format, ...);
+static int error_fatal (char *format, ...);
 void connectToDatabase(MYSQL **konekcija, const char *host, const char *user, const char *pass, const char *db);
 void printResult(void);
 char showMenu(void);
@@ -17,7 +17,7 @@ void listShop();
 void showFur();
 void buyQuery();
 void showBuy(void);
-
+void 	printMontazer();
 
 char query[1024];
 MYSQL *konekcija;
@@ -32,8 +32,12 @@ int main(int argc, char **argv)
 	connectToDatabase(&konekcija, "localhost", "ismer", "ismer", "salon_namestaja");
 	while(1){
 		showMenu();
-		printf("Da li yelite da nastavite rad sa bazom?(y/n)\n");
+		printf("Da li zelite da nastavite rad sa bazom?(y/n)\n");
+		/* getchar();  */
 		char c = getchar();
+		if(c == '\n'){
+			c = getchar();
+		}
 		printf("%c\n", c);
 		if(c == 'n')
 			break;
@@ -76,6 +80,9 @@ char showMenu(void)
 {
 	printf("Izaberite opciju:\ns- Prikaz stanja baze\nz- Dodaj novog zaposlenog\nk - kupi namestaj\nd- Brisanje\n");
 	char c = getchar();
+	if(c == '\n'){
+		c = getchar();
+	}
 	/* printf("%c\n", c); */
 	switch(c) {
 	case 's':
@@ -119,20 +126,28 @@ void addEmployee()
 	if (getline(&adresa, &size, stdin) == -1) {
 		printf("No line\n");
 	}
-	free(adresa);
+
 	
-	printf("Unesite datum rodjenja zaposlenog\n");
+	printf("Unesite datum rodjenja zaposlenog  (YYYY-MM-DD)\n");
 	scanf("%s", datum_rodjenja);
 	printf("Unesite jmbg zaposlenog\n");
 	scanf("%s", jmbg);
 	printf("Unesite vrstu zaposlenog (montazer/prodavac)\n");
 	getchar();
 	char c = getchar();
+
+	sprintf(query, "insert into zaposleni values(%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", id, name, prezime, adresa, datum_rodjenja, jmbg);
+	if(mysql_query(konekcija, query) != 0) {
+		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		return;
+	}
+	
 	if (c == 'm') {
 		printf("Unesite dnevnicu zaposlenog\n");
 		scanf("%d", &dnevnica);
 		printf("Unesite vrstu namestaja koju montira zaposleni\n");
 		scanf("%s", vrsta_namestaja);
+		sprintf(query, "insert into montazer values(%d, '%s', %d)", dnevnica, vrsta_namestaja, id);
 	} else {
 		listShop();
 		printf("Unesite mesecnu platu zaposlenog\n");
@@ -142,15 +157,15 @@ void addEmployee()
 		sprintf(query, "insert into prodavac values(%d, %d, %d)", plata, id, idProdavnice);
 	}
 
-	sprintf(query, "insert into zaposleni values(%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", id, name, prezime, adresa, datum_rodjenja, jmbg);
+	
+	free(adresa);	
+	/* printf("%s \n", query); */
+	if(mysql_query(konekcija, query) != 0) {
+		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		return;
+	}
 
-	if(mysql_query(konekcija, query) != 0) {
-		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
-	}
-	printf("%s \n", query);
-	if(mysql_query(konekcija, query) != 0) {
-		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
-	}
+	printf("Podaci su uspesno uneti\n");
 
 }
 
@@ -159,10 +174,22 @@ void listShop()
 	sprintf(query, "select * from prodavnica");
 	if(mysql_query(konekcija, query) != 0) {
 		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		return;
 	}
 
 	printResult();
 
+}
+
+void printMontazer()
+{
+	sprintf(query, "select * from montazer");
+	if(mysql_query(konekcija, query) != 0) {
+		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		return;
+	}
+
+	printResult();
 }
 
 void showFur()
@@ -170,6 +197,7 @@ void showFur()
 	sprintf(query, "select * from namestaj");
 	if(mysql_query(konekcija, query) != 0) {
 		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		return;
 	}
 
 	printResult();
@@ -179,6 +207,7 @@ void showBuy()
 	sprintf(query, "select * from kupac");
 	if(mysql_query(konekcija, query) != 0) {
 		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		return;
 	}
 
 	printResult();
@@ -195,22 +224,22 @@ void buyQuery()
 	printf("Unesite id kupca\n");
 	scanf("%d", &idKupca);
 
-	printf("Unesite datum kupovine\n");
+	printf("Unesite datum kupovine  (YYYY-MM-DD)\n");
 	scanf("%s", datum);
 
 	printf("Unestite id kupovine\n");
 	scanf("%d", &idKupovine);
 
-	sprintf(query, "insert into kupovina values(%d, \"%s\", 0, %d)", idKupovine, datum, idKupca);
-	if(mysql_query(konekcija, query) != 0) {
-		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
-	}
 
 	printf("Molimo vas napravite plan dostave\n");
 
 	char dostava[80];
-	int idMontazera;
-	printf("Unesite datum dostave\n");
+	int idMontazera, idPlanDostave;
+	/* printf("Unesite id plana dostave dostave\n"); */
+	/* scanf("%d", &idPlanDostave); */
+	idPlanDostave = idKupovine;
+	
+	printf("Unesite datum dostave (YYYY-MM-DD)\n");
 	scanf("%s", dostava);
 
 	printf("Unesite adresu\n");
@@ -221,17 +250,26 @@ void buyQuery()
 	if (getline(&adresa, &size, stdin) == -1) {
 		printf("No line\n");
 	}
-	free(adresa);
+
+	printMontazer();
 
 	printf("Unesite id montazera\n");
 	scanf("%d", &idMontazera);
 
-	sprintf(query, "insert into planDostave values(\"%s\", \"%s\", %d)", dostava, adresa, idMontazera);
+	sprintf(query, "insert into kupovina(idKupovine, datum, id_kupca) values(%d, \"%s\", %d)", idKupovine, datum, idKupca);
 	if(mysql_query(konekcija, query) != 0) {
-		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		error_fatal("Greska u upitu2 %s\n", mysql_error(konekcija));
+		return;
 	}
 
+	sprintf(query, "insert into salon_namestaja.planDostave values(%d, \"%s\", %d, \"%s\")", idPlanDostave, adresa, idMontazera, dostava);
+	if(mysql_query(konekcija, query) != 0) {
+		error_fatal("Greska u upitu1 %s\n", mysql_error(konekcija));
+		return;
+	}
 
+	free(adresa);
+	
 	printf("Izaberite namestaj\n");
 	char query1[1024];
 	int end = 0;
@@ -242,7 +280,7 @@ void buyQuery()
 		scanf("%d", &idNamestaja);
 		char query2[1024];
 		
-		sprintf(query2, " (%d, %d, \"%s\")",idNamestaja, idKupovine, dostava);
+		sprintf(query2, " (%d, %d, %d)",idNamestaja, idKupovine, idPlanDostave);
 		strcat(query1, query2);
 
 		printf("Da li zelite da kupite jos neki namestaj (y/n)\n");
@@ -258,10 +296,12 @@ void buyQuery()
 	}
 
 	sprintf(query, "%s", query1);
-	printf("%s -------", query);
 	if(mysql_query(konekcija, query) != 0) {
 		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		return;
 	}
+
+	printf("Podaci su uspesno ueti\n");
 	
 }
 
@@ -306,11 +346,12 @@ void selectQuery()
 
 	if(mysql_query(konekcija, query) != 0) {
 		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		return;
 	}
 
 	printResult();
 
-	printf("%s\n", query);
+	/* printf("%s\n", query); */
 	
 }
 
@@ -335,6 +376,7 @@ void insertQuery(void)
 
 	if(mysql_query(konekcija, query) != 0) {
 		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		return;
 	}
 
 	printf("Podaci su uspesno uneti\n");
@@ -361,6 +403,7 @@ void deleteQuery(void)
 	printf("%s\n", query);
 	if(mysql_query(konekcija, query) != 0) {
 		error_fatal("Greska u upitu %s\n", mysql_error(konekcija));
+		return;
 	}
 
 	printf("Podaci su uspesno izbrisan\n");
@@ -373,11 +416,12 @@ void connectToDatabase(MYSQL **konekcija, const char *host, const char *user, co
 
 	if(mysql_real_connect(*konekcija, host, user, pass, db, 0, NULL, 0) == NULL) {
 		error_fatal("Greska u konekciji %s\n", mysql_error(*konekcija));
+		return;
 	}
 		
 }
 
-static void error_fatal (char *format, ...)
+static int error_fatal (char *format, ...)
 {
 	va_list arguments;
 
@@ -385,7 +429,8 @@ static void error_fatal (char *format, ...)
 	vfprintf(stderr, format, arguments);
 	va_end (arguments);
 
-	
 
-	exit(EXIT_FAILURE);
+	return 0;
+
+	/* exit(EXIT_FAILURE); */
 }
